@@ -1,0 +1,15 @@
+# Exemplo de configuração de perfil para o dbt
+# Copie este conteúdo para ~/.dbt/profiles.yml e ajuste conforme seu ambiente local
+
+dbt_lab:
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 7100              # Porta do Floci / Redshift emulado
+      user: USER_AQUI
+      pass: SENHA_AQUI
+      dbname: DATABASE_AQUI
+      schema: public
+      threads: 4
+  target: dev

@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: stg_notion__pages
+    description: "Modelo staging da entidade de páginas extraídas do Notion, unboxing inicial das propriedades de JSONB."
+    columns:
+      - name: campo_md5
+        description: "ID único do registro."
+        tests:
+          - unique
+          - not_null

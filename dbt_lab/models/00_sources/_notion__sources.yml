@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: notion
+    database: dev
+    schema: public
+    tables:
+      - name: source_notion
+        description: "Tabela raw contendo as extrações da API do Notion salvas em formato JSONB."
+        columns:
+          - name: id
+            description: "Identificador único gerado automaticamente."
+            tests:
+              - unique
+              - not_null
+          - name: raw_data
+            description: "Objeto JSONB completo retornado pela API do Notion."
+          - name: ingested_at
+            description: "Timestamp do momento em que o registro foi ingerido."

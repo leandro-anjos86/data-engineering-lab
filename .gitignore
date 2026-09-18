@@ -1,0 +1,30 @@
+# Ambiente Virtual
+.venv/
+venv/
+ENV/
+
+# Variáveis de ambiente e credenciais
+.env
+*.env
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs e Editores
+.vscode/
+.idea/
+.DS_Store
+
+# Dados locais e temporários
+data/
+*.log
+
+# dbt - Arquivos temporários e compilação
+dbt_lab/target/
+dbt_lab/dbt_packages/
+dbt_lab/logs/
+dbt_lab/profiles.yml
+dbt_lab/profiles.yml.example
+logs/
