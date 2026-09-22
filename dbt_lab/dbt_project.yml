@@ -17,9 +17,9 @@ clean-targets:
 
 models:
   dbt_lab:
-    staging:
+    01_staging:
       +materialized: view
-    intermediate:
+    03_intermediate:
       +materialized: view
-    marts:
+    03_marts:
       +materialized: table
