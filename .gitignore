@@ -26,5 +26,5 @@ dbt_lab/target/
 dbt_lab/dbt_packages/
 dbt_lab/logs/
 dbt_lab/profiles.yml
-dbt_lab/dbt_project.yml
+dbt_lab/dbt_project.yml 
 logs/
