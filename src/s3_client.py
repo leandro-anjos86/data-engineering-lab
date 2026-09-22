@@ -17,7 +17,7 @@ class S3ClientFactory:
             "s3",
             endpoint_url=os.getenv("AWS_ENDPOINT_URL", "na"),
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", "na"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", ""),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", "na"),
             region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
             config=Config(
                 signature_version="s3v4",
