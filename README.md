@@ -46,6 +46,7 @@ data-engineering-lab/
 ---
 
 ⚡ Pré-requisitos & Infraestrutura Local
+
 Esta solução depende de uma infraestrutura global emulada via LocalStack/Floci para os serviços da AWS rodando na máquina local.
 Navegue até a pasta da sua infraestrutura local (ex: ~/localstack) e inicie os serviços:
 
