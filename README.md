@@ -1,89 +1,117 @@
 # Data Engineering Lab — Notion Analytics & Medallion Architecture
 
-Projeto prático de Engenharia de Dados focado no ecossistema AWS local, práticas de Analytics Engineering com **dbt** e orquestração. O objetivo principal é ingerir dados brutos da API do Notion (formato JSONB) e transformá-los utilizando a Arquitetura Medallion.
+Projeto prático de Engenharia de Dados focado na construção de um pipeline *end-to-end* num ecossistema AWS emulado localmente. A solução realiza a ingestão automatizada de dados da API do Notion (formato JSONB) para o S3, carrega os dados brutos no Amazon Redshift e aplica transformações usando **dbt Core** na Arquitetura Medallion, tudo orquestrado pelo **Apache Airflow**.
 
 ---
 
 ## 🏗️ Arquitetura da Solução
 
 ```text
-[ Notion API / Source ] 
-          │
-          ▼
- [ Floci / Redshift Raw ] (schema: public)
-          │
-          ▼
-   [ dbt Core / Postgres Adapter ]
-     ├── 00_sources       (Declarações e Data Quality Tests)
-     ├── 01_staging       (stg_notion__pages — Views)
-     ├── 02_intermediate  (Transformações e Regras de Negócio)
-     └── 03_marts         (Modelagem Dimensional — Tables)
+ [ Notion API ]
+       │
+       ▼
+ [ Python Extractor ] ──► [ AWS S3 (Bucket: Raw) ]
+                               │
+                               ▼
+                    [ Floci / Amazon Redshift (Raw) ] (schema: public)
+                               │
+                               ▼
+                 [ dbt Core / Postgres Adapter ]
+                   ├── 00_sources       (Declarações & Quality Tests)
+                   ├── 01_staging       (stg_notion__pages — Views)
+                   ├── 02_intermediate  (Regras de Negócio & Parsing JSONB)
+                   └── 03_marts         (Modelagem Dimensional — Tables)
+                               ▲
+                               │
+                [ Apache Airflow Orchestration ]
 ```
 🛠️ Tecnologias Utilizadas
-* Ambiente OS: WSL2 (Ubuntu)
-* Engine/Database: Floci (Emulador do Amazon Redshift com wire protocol PostgreSQL)
-* Transformação de Dados: dbt-core (dbt-postgres adapter)
-* Linguagem & Scripting: Python 3.x, SQL, Bash
+
+* Contentores & Ambiente: Docker, Docker Compose, WSL2 (Ubuntu)
+* Infraestrutura Cloud Local: Floci / LocalStack (Emulador AWS: S3 & Amazon Redshift)
+* Transformação de Dados: dbt Core (adapter dbt-postgres / dbt-redshift)
+* Linguagens & Bibliotecas: Python 3.10, SQL, boto3, psycopg2, pandas
+* Orquestração: Apache Airflow 2.8.1
 * Versionamento: Git & GitHub
 
 ---
+## 📁 Estrutura do Repositório
 ```text
-📁 Estrutura do Repositório
 data-engineering-lab/
-├── .env                        # Arquivo que carregará as variáveis/tokens/id (etc) no ambiente
-├── .gitignore                  # Ignora ambientes virtuais, caches e builds do dbt
-├── README.md                   # Documentação principal da solução
+├── .env.example                # Modelo de variáveis de ambiente para configuração
+├── .gitignore                  # Estratégia de exclusão de binários, logs e dados sensíveis
+├── README.md                   # Documentação do projeto
+├── docker-compose.yml          # Setup unificado (Airflow + Floci/AWS)
+├── airflow/                    # Módulo de orquestração do Airflow
+│   ├── dags/                   # DAGs de orquestração (ex: dag_notion_pipeline.py)
+│   └── requirements.txt      # Dependências Python adicionais do Airflow
 ├── dbt_lab/                    # Projeto dbt
-│   ├── dbt_project.yml         # Configurações do dbt e materializações por camada
-│   ├── profiles.yml.sample     # Modelo de perfil de conexão do dbt (copiar para ~/.dbt/)
-│   ├── models/
-│   │   ├── 00_sources/         # Fontes e testes de qualidade da camada Raw
-│   │   ├── 01_staging/         # Views de limpeza e unboxing inicial do JSONB
-│   │   ├── 02_intermediate/    # Regras de negócio e desaninhamento intermediário
-│   │   └── 03_marts/           # Tabelas dimensionais finais para BI/Analytics
-└── src/                        # Scripts em Python para ingestão e cargas auxiliares
+│   ├── dbt_project.yml         # Configurações gerais e materializações do dbt
+│   └── models/
+│       ├── 00_sources/         # Declarações da camada Raw e testes
+│       ├── 01_staging/         # Views de limpeza e unboxing inicial do JSONB
+│       ├── 02_intermediate/    # Regras de negócio e desaninhamento
+│       └── 03_marts/           # Tabelas dimensionais para Analytics/BI
+└── src/                        # Módulos Python de extração, carga e gestão de infraestrutura
+    ├── s3_client.py            # S3ClientFactory (Auto-provisionamento de S3 e Redshift)
+    ├── notion.py               # Extração paginada da API do Notion e envio para o S3
+    └── fontes.py               # Carga dos dados brutos do S3 para o Redshift
 ```
 ---
+## ⚡ Pré-requisitos & Execução Simplificada (One-Command Setup)
 
-⚡ Pré-requisitos & Infraestrutura Local
+Este projeto foi desenhado de forma totalmente modular e portátil. A infraestrutura inteira (orquestrador, motor de dados e emulador cloud) é inicializada a partir da raiz do repositório.
 
-Esta solução depende de uma infraestrutura global emulada via LocalStack/Floci para os serviços da AWS rodando na máquina local.
-Navegue até a pasta da sua infraestrutura local (ex: ~/localstack) e inicie os serviços:
-
-1. Subir os serviços de infraestrutura:
-```Bash
-docker compose up -d
-```
-
-2. Ativar o Ambiente Virtual:
+### 1. Ativar o Ambiente Virtual:
 ```Bash
 source .venv/bin/activate
 ```
 
-3. Validar a conexão com o dbt:
+### 2. Configurar as Variáveis de Ambiente
+Crie um ficheiro .env na raiz do projeto com base no modelo .env.example:
 ```Bash
-cd dbt_lab
+cp .env.example .env
+```
+
+### 3. Inicializar o Ambiente Emulado (Docker)
+Execute o comando abaixo na raiz do repositório para subir os contentores do Floci e do Airflow:
+```Bash
+docker compose up -d
+```
+
+### 4. Acessar a Interface e Validar
+* Apache Airflow Webserver: http://localhost:8080
+* Os recursos na nuvem local (Bucket S3 e Cluster Redshift na porta 7100) são auto-provisionados na primeira execução dos pipelines via S3ClientFactory.
+
+---
+
+## 🧪 Executando o Pipeline e dbt via CLI (Opcional)
+Também é possível executar os comandos do dbt diretamente dentro do container do Airflow ou na máquina local:
+
+### Entrar no container do Airflow
+```Bash
+docker exec -it airflow_local bash
+```
+
+### Navegar até ao projeto dbt
+```Bash
+cd /opt/airflow/dbt_lab
+```
+
+### Testar a conexão com o banco
+```Bash
 dbt debug
 ```
----
 
-🧪 Executando os Testes e Modelos dbt
-Rodar os modelos Staging:
+### Compilar e executar os modelos de staging
 ```Bash
-dbt run --select staging
+dbt build --select 01_staging
 ```
 
-Executar testes de qualidade de dados (Data Quality):
+### Executar todos os testes de qualidade de dados
 ```Bash
-# Testar apenas o modelo de staging do Notion
-dbt test --select stg_notion__pages
-
-# Testar as declarações da camada de Sources
-dbt test --select source:notion
-
-# Rodar todos os testes do projeto
 dbt test
 ```
----
 
-Desenvolvido por Leandro Anjos como parte dos laboratórios práticos de Engenharia e Arquitetura de Dados/ Analytics Engineering.
+---
+*Desenvolvido por Leandro Anjos como parte dos laboratórios práticos de Engenharia e Arquitetura de Dados/ Analytics Engineering.*
