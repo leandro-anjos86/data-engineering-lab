@@ -11,6 +11,7 @@ ENV/
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # IDEs e Editores
 .vscode/
@@ -26,5 +27,12 @@ dbt_lab/target/
 dbt_lab/dbt_packages/
 dbt_lab/logs/
 dbt_lab/profiles.yml
-dbt_lab/dbt_project.yml 
 logs/
+
+# Base de Dados do Airflow
+airflow/airflow.db
+airflow/logs/
+logs/
+
+# Pasta de dados do Floci
+floci_data/

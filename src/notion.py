@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 from notion_client import Client
-from s3_client import S3ClientFactory
+from src.s3_client import S3ClientFactory
 
 # carrega as variáveis do arquivo .env
 load_dotenv()
@@ -14,9 +14,6 @@ def extrair_notion_para_s3():
     Realiza a extração dos dados de vagas do Notion, aplica os tratamentos de colunas,
     converte para o formato Parquet e faz o upload para o S3/Floci.
     """
-    # instancia o cliente do S3 utilizando a classe de conexão
-    s3_client = S3ClientFactory.get_client()
-
     # token da integração
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     # Database ID no notion
@@ -154,14 +151,18 @@ def extrair_notion_para_s3():
     # upload para o S3/Floci
     bucket_name = os.getenv("AWS_S3_BUCKET")
     s3_key = os.getenv("AWS_S3_BUCKET_KEY_NOTION")
+    
+    # instancia o cliente do S3 utilizando a classe de conexão
+    S3ClientFactory.ensure_bucket_exists(bucket_name)
+    s3_client = S3ClientFactory.get_client()
 
+    # Depois de criar o bucket faz o upload normalmente
     s3_client.upload_fileobj(
         Fileobj=buffer,
         Bucket=bucket_name,
         Key=s3_key,
     )
     print(f"Extração concluída com sucesso! {len(df_filtrado)} registros salvos em s3://{bucket_name}/{s3_key}")
-
 
 if __name__ == "__main__":
     try:

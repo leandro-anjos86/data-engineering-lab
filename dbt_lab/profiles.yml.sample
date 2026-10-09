@@ -1,5 +1,6 @@
 # Exemplo de configuração de perfil para o dbt
 # Copie este conteúdo para ~/.dbt/profiles.yml e ajuste conforme seu ambiente local
+# Se preferir, pode se utilizado a macro env_var() do dbt para compor cada item do profiles
 
 dbt_lab:
   outputs:

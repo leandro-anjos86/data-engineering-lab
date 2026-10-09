@@ -1,0 +1,45 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: floci
+    ports:
+      - "4566:4566"
+      - "7001-7099:7001-7099"
+      - "7100-7199:7100-7199"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    environment:
+      FLOCI_STORAGE_MODE: hybrid
+      FLOCI_SERVICES_RDS_PROXY_BASE_PORT: "7001"
+      FLOCI_SERVICES_REDSHIFT_PROXY_BASE_PORT: "7100"
+      FLOCI_SERVICES_REDSHIFT_PROXY_MAX_PORT: "7199"
+
+  airflow:
+    image: apache/airflow:2.8.1-python3.10
+    container_name: airflow_local
+    restart: always
+    depends_on:
+      - floci
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      - AIRFLOW__CORE__FERNET_KEY=46ExToBhu95mWKH34BGL2S_FiA359GFB1GEW3Q37N34=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=secret_key_data_lab
+      - PYTHONPATH=/opt/airflow
+      - _PIP_ADDITIONAL_REQUIREMENTS=-r /opt/airflow/requirements.txt
+      - AWS_ENDPOINT_URL=http://floci:4566
+      - REDSHIFT_HOST=floci
+      - REDSHIFT_PORT=7100
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/requirements.txt:/opt/airflow/requirements.txt
+      - ./airflow/airflow.db:/opt/airflow/airflow.db
+      - ./src:/opt/airflow/src
+      - ./dbt_lab:/opt/airflow/dbt_lab
+      - ./.env:/opt/airflow/.env
+      - ~/.dbt:/home/airflow/.dbt
+    ports:
+      - "8080:8080"
+    command: standalone
