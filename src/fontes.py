@@ -5,7 +5,7 @@ import pandas as pd
 import psycopg2
 from dotenv import load_dotenv
 from psycopg2.extras import execute_values
-from s3_client import S3ClientFactory
+from src.s3_client import S3ClientFactory
 
 # carrega as variáveis do arquivo .env
 load_dotenv()
@@ -30,13 +30,17 @@ def carregar_notion_para_redshift():
     # gera a lista de tuplas para o PostgreSQL
     data_tuples = [(json.dumps(record),) for record in records]
 
+    # instancia o cliente do S3 utilizando a classe de conexão
+    S3ClientFactory.ensure_redshift_cluster_exists()
+    
     # conectar ao redshift do floci
     conn = psycopg2.connect(
-        host=os.getenv("REDSHIFT_HOST"),
-        port=os.getenv("REDSHIFT_PORT"),
-        dbname=os.getenv("REDSHIFT_DB"),
-        user=os.getenv("REDSHIFT_USER"),
-        password=os.getenv("REDSHIFT_PASSWORD"),
+        host=os.getenv('REDSHIFT_HOST'),
+        port=int(os.getenv('REDSHIFT_PORT')),
+        dbname=os.getenv('REDSHIFT_DB'),
+        user=os.getenv('REDSHIFT_USER'),
+        password=os.getenv('REDSHIFT_PASSWORD'),
+        sslmode='disable',
     )
 
     try:
