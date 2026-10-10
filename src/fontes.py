@@ -11,6 +11,9 @@ from src.s3_client import S3ClientFactory
 load_dotenv()
 
 def carregar_notion_para_redshift():
+    # instancia o cliente do redshift utilizando a classe de conexão
+    S3ClientFactory.ensure_redshift_cluster_exists()
+    
     # instancia a conexão com o S3 com a classe reutilizável
     s3_client = S3ClientFactory.get_client()
 
@@ -29,10 +32,7 @@ def carregar_notion_para_redshift():
 
     # gera a lista de tuplas para o PostgreSQL
     data_tuples = [(json.dumps(record),) for record in records]
-
-    # instancia o cliente do S3 utilizando a classe de conexão
-    S3ClientFactory.ensure_redshift_cluster_exists()
-    
+   
     # conectar ao redshift do floci
     conn = psycopg2.connect(
         host=os.getenv('REDSHIFT_HOST'),
