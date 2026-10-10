@@ -15,6 +15,26 @@ services:
       FLOCI_SERVICES_REDSHIFT_PROXY_BASE_PORT: "7100"
       FLOCI_SERVICES_REDSHIFT_PROXY_MAX_PORT: "7199"
 
+  init-aws:
+    image: amazon/aws-cli
+    container_name: init_aws
+    depends_on:
+      floci:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    command: >
+      sh -c "sleep 3 && aws --endpoint-url=http://floci:4566 redshift create-cluster
+      --cluster-identifier redshift-cluster-1
+      --node-type dc2.large
+      --master-username ${REDSHIFT_USER}
+      --master-user-password ${REDSHIFT_PASSWORD}
+      --db-name ${REDSHIFT_DB} --no-cli-pager || true"
+
   airflow:
     image: apache/airflow:2.8.1-python3.10
     container_name: airflow_local
@@ -30,8 +50,10 @@ services:
       - PYTHONPATH=/opt/airflow
       - _PIP_ADDITIONAL_REQUIREMENTS=-r /opt/airflow/requirements.txt
       - AWS_ENDPOINT_URL=http://floci:4566
-      - REDSHIFT_HOST=floci
+      - REDSHIFT_HOST=host.docker.internal
       - REDSHIFT_PORT=7100
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/requirements.txt:/opt/airflow/requirements.txt
